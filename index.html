@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Absensi SMK 3 Banjar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    .animate-fade-in-up {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+    
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #3d7ab5 100%);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+    }
+    
+    .input-field {
+      transition: all 0.3s ease;
+      border: 2px solid #e5e7eb;
+    }
+    
+    .input-field:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+    
+    .status-btn.active {
+      transform: scale(1.05);
+    }
+    
+    .status-hadir.active {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    .status-izin.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      box-shadow: 0 5px 20px rgba(245, 158, 11, 0.4);
+    }
+    
+    .status-sakit.active {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+    }
+    
+    .status-alfa.active {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      color: white;
+      box-shadow: 0 5px 20px rgba(107, 114, 128, 0.4);
+    }
+    
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+    }
+    
+    .scroll-container {
+      scrollbar-width: thin;
+      scrollbar-color: #10b981 #e5e7eb;
+    }
+    
+    .scroll-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-track {
+      background: #e5e7eb;
+      border-radius: 3px;
+    }
+    
+    .scroll-container::-webkit-scrollbar-thumb {
+      background: #10b981;
+      border-radius: 3px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+ </head>
+ <body class="h-full gradient-bg">
+  <div id="app" class="h-full w-full overflow-auto scroll-container">
+   <div id="loading-screen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
+    <div class="text-center">
+     <div class="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+     <p class="text-white text-xl font-semibold">Memuat Sistem Absensi...</p>
+     <p class="text-white/70 text-sm mt-2" id="load-status">Mengambil data siswa...</p>
+    </div>
+   </div>
+   <div id="main-content" class="min-h-full p-4 md:p-6 opacity-0">
+    <header class="text-center mb-6 animate-fade-in-up">
+     <div class="inline-block mb-4">
+      <div class="w-20 h-20 md:w-24 md:h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-xl">
+       <svg class="w-12 h-12 md:w-14 md:h-14 text-emerald-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+       </svg>
+      </div>
+     </div>
+     <h1 id="school-name" class="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">SMK 3 Banjar</h1>
+     <p id="welcome-text" class="text-lg md:text-xl text-emerald-200 font-medium">Sistem Absensi Online</p>
+     <div class="mt-4 inline-block glass-card rounded-2xl px-6 py-3 shadow-lg">
+      <div class="flex items-center gap-3 text-gray-700">
+       <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+       </svg><span id="current-date" class="font-semibold">Memuat...</span>
+      </div>
+      <div class="flex items-center gap-3 text-gray-700 mt-1">
+       <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+       </svg><span id="current-time" class="font-semibold text-lg">--:--:--</span> <span class="text-sm text-gray-500">WIB</span>
+      </div>
+     </div>
+    </header>
+    <div class="max-w-lg mx-auto animate-fade-in-up delay-200" style="opacity: 0;">
+     <div class="glass-card rounded-3xl shadow-2xl overflow-hidden">
+      <div class="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-4">
+       <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+        </svg> Form Absensi</h2>
+      </div>
+      <div class="p-6">
+       <div class="mb-5"><label class="block text-gray-700 font-semibold mb-2">Pilih Jurusan</label> <select id="jurusan-select" class="w-full px-4 py-3 rounded-xl input-field bg-white outline-none font-medium"> <option value="">-- Pilih Jurusan --</option> <option value="PPLG">PPLG</option> <option value="Akuntansi">Akuntansi</option> <option value="APHP">APHP</option> <option value="TKR">TKR</option> <option value="TSM">TSM</option> </select>
+       </div>
+       <div class="mb-5"><label class="block text-gray-700 font-semibold mb-2">Nama Siswa</label>
+        <div class="relative"><input type="text" id="nama-input" placeholder="Ketik nama untuk mencari..." class="w-full px-4 py-3 rounded-xl input-field bg-white outline-none" autocomplete="off">
+         <div id="nama-suggestions" class="absolute top-full left-0 right-0 bg-white rounded-xl shadow-lg mt-1 max-h-48 overflow-auto hidden z-10 border border-gray-200"></div>
+        </div>
+        <div id="student-info" class="mt-3 hidden">
+         <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <div class="flex items-center gap-3">
+           <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg" id="student-avatar">
+            -
+           </div>
+           <div>
+            <p class="font-semibold text-gray-800" id="student-name-display">-</p>
+            <p class="text-sm text-gray-600"><span id="student-kelas">-</span> | <span id="student-jurusan">-</span></p>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="mb-5"><label class="block text-gray-700 font-semibold mb-3">Status Kehadiran</label>
+        <div class="grid grid-cols-4 gap-2 md:gap-3"><button type="button" class="status-btn status-hadir py-3 px-2 md:px-4 rounded-xl border-2 border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold hover:bg-emerald-100 text-xs md:text-sm" data-status="Hadir"> <span class="text-lg md:text-xl mb-1 block">✅</span> Hadir </button> <button type="button" class="status-btn status-izin py-3 px-2 md:px-4 rounded-xl border-2 border-amber-300 bg-amber-50 text-amber-700 font-semibold hover:bg-amber-100 text-xs md:text-sm" data-status="Izin"> <span class="text-lg md:text-xl mb-1 block">📝</span> Izin </button> <button type="button" class="status-btn status-sakit py-3 px-2 md:px-4 rounded-xl border-2 border-red-300 bg-red-50 text-red-700 font-semibold hover:bg-red-100 text-xs md:text-sm" data-status="Sakit"> <span class="text-lg md:text-xl mb-1 block">🏥</span> Sakit </button> <button type="button" class="status-btn status-alfa py-3 px-2 md:px-4 rounded-xl border-2 border-gray-400 bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 text-xs md:text-sm" data-status="Alfa"> <span class="text-lg md:text-xl mb-1 block">❌</span> Alfa </button>
+        </div>
+       </div>
+       <div class="mb-6" id="keterangan-section"><label class="block text-gray-700 font-semibold mb-2">Keterangan (Opsional)</label> <textarea id="keterangan-input" rows="2" placeholder="Tambahkan keterangan jika diperlukan..." class="w-full px-4 py-3 rounded-xl input-field bg-white outline-none resize-none"></textarea>
+        <p id="alfa-notice" class="text-sm text-gray-600 mt-2 hidden">⚠️ Status Alfa otomatis menjadi "Tanpa Keterangan"</p>
+       </div><button id="submit-btn" class="w-full btn-primary text-white font-bold py-4 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+        </svg> Kirim Absensi </button>
+      </div>
+     </div>
+    </div>
+    <div class="max-w-4xl mx-auto mt-8 animate-fade-in-up delay-400" style="opacity: 0;">
+     <div class="glass-card rounded-3xl shadow-2xl overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
+       <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg> Riwayat Absensi Hari Ini</h2>
+      </div>
+      <div class="p-6">
+       <div class="flex flex-wrap gap-3 mb-4"><select id="filter-jurusan" class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium"> <option value="">Semua Jurusan</option> <option value="PPLG">PPLG</option> <option value="Akuntansi">Akuntansi</option> <option value="APHP">APHP</option> <option value="TKR">TKR</option> <option value="TSM">TSM</option> </select> <select id="filter-status" class="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm font-medium"> <option value="">Semua Status</option> <option value="Hadir">Hadir</option> <option value="Izin">Izin</option> <option value="Sakit">Sakit</option> <option value="Alfa">Alfa</option> </select>
+       </div>
+       <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 text-center border border-emerald-200">
+         <p class="text-3xl font-bold text-emerald-600" id="stat-hadir">0</p>
+         <p class="text-sm text-emerald-700 font-medium">Hadir</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 text-center border border-amber-200">
+         <p class="text-3xl font-bold text-amber-600" id="stat-izin">0</p>
+         <p class="text-sm text-amber-700 font-medium">Izin</p>
+        </div>
+        <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 text-center border border-red-200">
+         <p class="text-3xl font-bold text-red-600" id="stat-sakit">0</p>
+         <p class="text-sm text-red-700 font-medium">Sakit</p>
+        </div>
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 text-center border border-gray-300">
+         <p class="text-3xl font-bold text-gray-700" id="stat-alfa">0</p>
+         <p class="text-sm text-gray-700 font-medium">Alfa</p>
+        </div>
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200">
+         <p class="text-3xl font-bold text-blue-600" id="stat-total">0</p>
+         <p class="text-sm text-blue-700 font-medium">Total</p>
+        </div>
+       </div>
+       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+         <thead>
+          <tr class="bg-gray-100">
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">No</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Nama</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Kelas</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Jurusan</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Tanggal</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Waktu</th>
+           <th class="px-4 py-3 text-left font-semibold text-gray-700">Keterangan</th>
+          </tr>
+         </thead>
+         <tbody id="attendance-table-body">
+          <tr>
+           <td colspan="8" class="px-4 py-8 text-center text-gray-500"><p>Belum ada data absensi hari ini</p></td>
+          </tr>
+         </tbody>
+        </table>
+       </div>
+      </div>
+     </div>
+    </div>
+    <footer class="text-center mt-8 pb-6 animate-fade-in-up delay-500" style="opacity: 0;">
+     <p class="text-white/80 text-sm">© 2024 SMK 3 Banjar - Sistem Absensi Online</p>
+    </footer>
+   </div>
+   <div id="loading-modal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden">
+    <div class="glass-card rounded-2xl p-8 max-w-sm mx-4 text-center">
+     <div class="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+     <h3 class="text-xl font-bold text-gray-800 mb-2">Mengirim Data</h3>
+     <p class="text-gray-600">Mohon menunggu, data sedang dikirim...</p>
+    </div>
+   </div>
+   <div id="success-modal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden">
+    <div class="glass-card rounded-2xl p-8 max-w-sm mx-4 text-center animate-fade-in-up">
+     <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+      </svg>
+     </div>
+     <h3 class="text-xl font-bold text-gray-800 mb-2">Berhasil!</h3>
+     <p class="text-gray-600 mb-2">Absensi telah tercatat</p>
+     <div id="success-details" class="bg-gray-50 rounded-xl p-4 text-left mb-4">
+      <p class="text-sm text-gray-600"><strong>Nama:</strong> <span id="success-nama">-</span></p>
+      <p class="text-sm text-gray-600"><strong>Status:</strong> <span id="success-status">-</span></p>
+      <p class="text-sm text-gray-600"><strong>Tanggal &amp; Waktu:</strong> <span id="success-waktu">-</span></p>
+      <p class="text-sm text-gray-600"><strong>Keterangan:</strong> <span id="success-keterangan">-</span></p>
+     </div><button id="close-success" class="btn-primary text-white font-semibold py-3 px-8 rounded-xl">Tutup</button>
+    </div>
+   </div>
+   <div id="error-modal" class="fixed inset-0 modal-overlay flex items-center justify-center z-50 hidden">
+    <div class="glass-card rounded-2xl p-8 max-w-sm mx-4 text-center animate-fade-in-up">
+     <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+     </div>
+     <h3 class="text-xl font-bold text-gray-800 mb-2">Gagal!</h3>
+     <p class="text-gray-600 mb-4" id="error-message">Terjadi kesalahan saat mengirim data</p><button id="close-error" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-8 rounded-xl transition">Tutup</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      school_name: 'SMK 3 Banjar',
+      welcome_text: 'Sistem Absensi Online'
+    };
+    
+    const STUDENT_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTs97A9yxP8DeJahsPsB5N91mdTuf99Vqc_UMTPI0nPip-JxajRwaKuSKRGjRs_Gib2RnylZGenmofx/pub?gid=0&single=true&output=csv';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8RuLssnWYOgXF8EADRrnUymzMIRpIo0OVlBTCGWiVLw2UUH2IboM5KumF6nXmPyFiTQ/exec';
+    
+    let studentsData = [];
+    let selectedStudent = null;
+    let selectedStatus = null;
+    let attendanceRecords = [];
+    let config = { ...defaultConfig };
+    
+    const loadingScreen = document.getElementById('loading-screen');
+    const mainContent = document.getElementById('main-content');
+    const jurusanSelect = document.getElementById('jurusan-select');
+    const namaInput = document.getElementById('nama-input');
+    const namaSuggestions = document.getElementById('nama-suggestions');
+    const studentInfo = document.getElementById('student-info');
+    const keteranganInput = document.getElementById('keterangan-input');
+    const alfaNotice = document.getElementById('alfa-notice');
+    const submitBtn = document.getElementById('submit-btn');
+    const loadingModal = document.getElementById('loading-modal');
+    const successModal = document.getElementById('success-modal');
+    const errorModal = document.getElementById('error-modal');
+    const loadStatus = document.getElementById('load-status');
+    
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          document.getElementById('school-name').textContent = config.school_name || defaultConfig.school_name;
+          document.getElementById('welcome-text').textContent = config.welcome_text || defaultConfig.welcome_text;
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['school_name', cfg.school_name || defaultConfig.school_name],
+          ['welcome_text', cfg.welcome_text || defaultConfig.welcome_text]
+        ])
+      });
+    }
+    
+    const dataHandler = {
+      onDataChanged(data) {
+        attendanceRecords = data || [];
+        renderAttendanceTable();
+        updateStatistics();
+      }
+    };
+    
+    async function initDataSdk() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error('Failed to initialize Data SDK');
+        }
+      }
+    }
+    
+    function updateDateTime() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStr = now.toLocaleDateString('id-ID', options);
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      document.getElementById('current-date').textContent = dateStr;
+      document.getElementById('current-time').textContent = timeStr;
+    }
+    
+    async function fetchStudentData() {
+      try {
+        loadStatus.textContent = 'Mengambil data dari Google Sheets...';
+        const response = await fetch(STUDENT_DATA_URL);
+        const csvText = await response.text();
+        const lines = csvText.trim().split('\n');
+        
+        if (lines.length < 2) {
+          throw new Error('Format data tidak sesuai');
+        }
+        
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const namaIdx = headers.indexOf('nama');
+        const kelasIdx = headers.indexOf('kelas');
+        const jurusanIdx = headers.indexOf('jurusan');
+        
+        if (namaIdx === -1 || kelasIdx === -1 || jurusanIdx === -1) {
+          throw new Error('Kolom data tidak lengkap (nama, kelas, jurusan)');
+        }
+        
+        studentsData = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cells = lines[i].split(',').map(c => c.trim());
+          if (cells[namaIdx]) {
+            studentsData.push({
+              nama: cells[namaIdx],
+              kelas: cells[kelasIdx] || '',
+              jurusan: cells[jurusanIdx] || ''
+            });
+          }
+        }
+        
+        loadStatus.textContent = `Data berhasil dimuat (${studentsData.length} siswa)`;
+        console.log('Students loaded:', studentsData.length);
+        return studentsData.length > 0;
+      } catch (error) {
+        loadStatus.textContent = 'Gagal memuat data: ' + error.message;
+        console.error('Error fetching student data:', error);
+        return false;
+      }
+    }
+    
+    function getStudentsByJurusan(jurusan) {
+      if (!jurusan) return [];
+      return studentsData.filter(s => s.jurusan.toLowerCase() === jurusan.toLowerCase());
+    }
+    
+    function searchStudents(query, jurusan) {
+      if (!query || query.length < 2) return [];
+      const students = getStudentsByJurusan(jurusan);
+      return students.filter(s => s.nama.toLowerCase().includes(query.toLowerCase())).slice(0, 10);
+    }
+    
+    function showSuggestions(students) {
+      if (students.length === 0) {
+        namaSuggestions.classList.add('hidden');
+        return;
+      }
+      
+      namaSuggestions.innerHTML = students.map(s => `
+        <div class="px-4 py-3 hover:bg-emerald-50 cursor-pointer transition border-b border-gray-100 last:border-0" data-nama="${s.nama}" data-kelas="${s.kelas}" data-jurusan="${s.jurusan}">
+          <p class="font-semibold text-gray-800">${s.nama}</p>
+          <p class="text-sm text-gray-500">${s.kelas} | ${s.jurusan}</p>
+        </div>
+      `).join('');
+      
+      namaSuggestions.classList.remove('hidden');
+      namaSuggestions.querySelectorAll('div').forEach(item => {
+        item.addEventListener('click', () => selectStudent(item.dataset));
+      });
+    }
+    
+    function selectStudent(data) {
+      selectedStudent = data;
+      namaInput.value = data.nama;
+      namaSuggestions.classList.add('hidden');
+      
+      document.getElementById('student-avatar').textContent = data.nama.charAt(0).toUpperCase();
+      document.getElementById('student-name-display').textContent = data.nama;
+      document.getElementById('student-kelas').textContent = data.kelas || '-';
+      document.getElementById('student-jurusan').textContent = data.jurusan || '-';
+      studentInfo.classList.remove('hidden');
+      
+      validateForm();
+    }
+    
+    function selectStatus(status) {
+      selectedStatus = status;
+      document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.status === status) {
+          btn.classList.add('active');
+        }
+      });
+      
+      if (status === 'Alfa') {
+        keteranganInput.value = 'Tanpa Keterangan';
+        keteranganInput.disabled = true;
+        alfaNotice.classList.remove('hidden');
+      } else {
+        keteranganInput.disabled = false;
+        alfaNotice.classList.add('hidden');
+        if (keteranganInput.value === 'Tanpa Keterangan') {
+          keteranganInput.value = '';
+        }
+      }
+      
+      validateForm();
+    }
+    
+    function validateForm() {
+      const isValid = selectedStudent && selectedStatus && jurusanSelect.value;
+      submitBtn.disabled = !isValid;
+    }
+    
+    async function submitAttendance() {
+      if (!selectedStudent || !selectedStatus) return;
+      
+      const now = new Date();
+      const tanggal = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const waktu = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const timestamp = now.toISOString();
+      
+      let keterangan = keteranganInput.value.trim() || '-';
+      if (selectedStatus === 'Alfa') {
+        keterangan = 'Tanpa Keterangan';
+      }
+      
+      const attendanceData = {
+        nama: selectedStudent.nama,
+        kelas: selectedStudent.kelas || '-',
+        jurusan: selectedStudent.jurusan || jurusanSelect.value,
+        status: selectedStatus,
+        keterangan: keterangan,
+        tanggal: tanggal,
+        waktu: waktu,
+        timestamp: timestamp
+      };
+      
+      loadingModal.classList.remove('hidden');
+      
+      try {
+        if (window.dataSdk) {
+          const result = await window.dataSdk.create(attendanceData);
+          if (!result.isOk) {
+            throw new Error('Failed to save to Canva Sheet');
+          }
+        }
+        
+        try {
+          const formData = new FormData();
+          Object.entries(attendanceData).forEach(([key, value]) => {
+            formData.append(key, value);
+          });
+          
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: formData,
+            mode: 'no-cors'
+          });
+        } catch (e) {
+          console.error('Google Sheets sync error:', e);
+        }
+        
+        loadingModal.classList.add('hidden');
+        
+        document.getElementById('success-nama').textContent = attendanceData.nama;
+        document.getElementById('success-status').textContent = attendanceData.status;
+        document.getElementById('success-waktu').textContent = `${attendanceData.tanggal} ${attendanceData.waktu}`;
+        document.getElementById('success-keterangan').textContent = attendanceData.keterangan;
+        successModal.classList.remove('hidden');
+        
+        resetForm();
+        
+      } catch (error) {
+        loadingModal.classList.add('hidden');
+        document.getElementById('error-message').textContent = error.message || 'Terjadi kesalahan saat mengirim data';
+        errorModal.classList.remove('hidden');
+      }
+    }
+    
+    function resetForm() {
+      namaInput.value = '';
+      keteranganInput.value = '';
+      keteranganInput.disabled = false;
+      selectedStudent = null;
+      selectedStatus = null;
+      studentInfo.classList.add('hidden');
+      alfaNotice.classList.add('hidden');
+      document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+      submitBtn.disabled = true;
+    }
+    
+    function renderAttendanceTable() {
+      const tbody = document.getElementById('attendance-table-body');
+      const filterJurusan = document.getElementById('filter-jurusan').value;
+      const filterStatus = document.getElementById('filter-status').value;
+      
+      let filtered = [...attendanceRecords];
+      const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      filtered = filtered.filter(r => r.tanggal === today);
+      
+      if (filterJurusan) {
+        filtered = filtered.filter(r => r.jurusan === filterJurusan);
+      }
+      if (filterStatus) {
+        filtered = filtered.filter(r => r.status === filterStatus);
+      }
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">Belum ada data</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = filtered.map((record, index) => {
+        const statusClasses = {
+          'Hadir': 'bg-emerald-100 text-emerald-700',
+          'Izin': 'bg-amber-100 text-amber-700',
+          'Sakit': 'bg-red-100 text-red-700',
+          'Alfa': 'bg-gray-200 text-gray-700'
+        };
+        const statusIcons = {
+          'Hadir': '✅',
+          'Izin': '📝',
+          'Sakit': '🏥',
+          'Alfa': '❌'
+        };
+        
+        return `
+          <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="px-4 py-3">${index + 1}</td>
+            <td class="px-4 py-3 font-semibold">${record.nama}</td>
+            <td class="px-4 py-3">${record.kelas}</td>
+            <td class="px-4 py-3">${record.jurusan}</td>
+            <td class="px-4 py-3"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${statusClasses[record.status]}">${statusIcons[record.status]} ${record.status}</span></td>
+            <td class="px-4 py-3 text-sm">${record.tanggal}</td>
+            <td class="px-4 py-3 text-sm">${record.waktu}</td>
+            <td class="px-4 py-3 text-sm">${record.keterangan || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function updateStatistics() {
+      const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const todayRecords = attendanceRecords.filter(r => r.tanggal === today);
+      
+      document.getElementById('stat-hadir').textContent = todayRecords.filter(r => r.status === 'Hadir').length;
+      document.getElementById('stat-izin').textContent = todayRecords.filter(r => r.status === 'Izin').length;
+      document.getElementById('stat-sakit').textContent = todayRecords.filter(r => r.status === 'Sakit').length;
+      document.getElementById('stat-alfa').textContent = todayRecords.filter(r => r.status === 'Alfa').length;
+      document.getElementById('stat-total').textContent = todayRecords.length;
+    }
+    
+    jurusanSelect.addEventListener('change', () => {
+      namaInput.value = '';
+      selectedStudent = null;
+      studentInfo.classList.add('hidden');
+      namaSuggestions.classList.add('hidden');
+      validateForm();
+    });
+    
+    namaInput.addEventListener('input', (e) => {
+      const jurusan = jurusanSelect.value;
+      if (!jurusan) {
+        namaSuggestions.innerHTML = '<div class="px-4 py-3 text-amber-600 text-sm">Pilih jurusan dulu</div>';
+        namaSuggestions.classList.remove('hidden');
+        return;
+      }
+      const results = searchStudents(e.target.value, jurusan);
+      showSuggestions(results);
+      selectedStudent = null;
+      studentInfo.classList.add('hidden');
+      validateForm();
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!namaInput.contains(e.target) && !namaSuggestions.contains(e.target)) {
+        namaSuggestions.classList.add('hidden');
+      }
+    });
+    
+    document.querySelectorAll('.status-btn').forEach(btn => {
+      btn.addEventListener('click', () => selectStatus(btn.dataset.status));
+    });
+    
+    submitBtn.addEventListener('click', submitAttendance);
+    document.getElementById('close-success').addEventListener('click', () => successModal.classList.add('hidden'));
+    document.getElementById('close-error').addEventListener('click', () => errorModal.classList.add('hidden'));
+    
+    document.getElementById('filter-jurusan').addEventListener('change', renderAttendanceTable);
+    document.getElementById('filter-status').addEventListener('change', renderAttendanceTable);
+    
+    async function init() {
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+      
+      await initDataSdk();
+      const loaded = await fetchStudentData();
+      
+      setTimeout(() => {
+        loadingScreen.style.opacity = '0';
+        loadingScreen.style.transition = 'opacity 0.5s ease';
+        
+        setTimeout(() => {
+          loadingScreen.classList.add('hidden');
+          mainContent.style.opacity = '1';
+          mainContent.style.transition = 'opacity 0.5s ease';
+          
+          document.querySelectorAll('.animate-fade-in-up').forEach((el, i) => {
+            setTimeout(() => {
+              el.style.opacity = '1';
+            }, i * 100);
+          });
+        }, 500);
+      }, 1500);
+    }
+    
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cd9f03597afe9cf',t:'MTc3MTA0NDU2MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+    
